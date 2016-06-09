@@ -66,6 +66,7 @@
 
 -spec datetime_to_epoch_msecs({calendar:datetime1970(), millisecond()}) ->
     epoch_milliseconds().
+
 datetime_to_epoch_msecs({Datetime, Msecs}) when Msecs >= 0, Msecs < 1000 ->
     Seconds = calendar:datetime_to_gregorian_seconds(Datetime),
     (Seconds - ?GREGORIAN_SECONDS_TO_UNIX_EPOCH) * 1000 + Msecs.
@@ -202,16 +203,16 @@ iso8601_to_datetime(
     Datetime = {Date, Time},
     case Tail of
         <<"Z">> ->
-            Datetime;
+            {Datetime, 0};
         <<".000Z">> ->
-            Datetime;
+            {Datetime, 0};
         <<$., Millisec:3/binary, $Z>> ->
             {Datetime, binary_to_integer(Millisec)};
         <<$., Millisec:3/binary, UtcOffset:6/binary>> ->
             UTC = local_datetime_to_utc(Datetime, UtcOffset),
             {UTC, binary_to_integer(Millisec)};
         <<UtcOffset:6/binary>> ->
-            local_datetime_to_utc(Datetime, UtcOffset)
+            {local_datetime_to_utc(Datetime, UtcOffset), 0}
     end.
 
 -spec iso8601_to_epoch_msecs(binary()) ->
