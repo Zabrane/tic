@@ -201,18 +201,38 @@ iso8601_to_datetime(
         , binary_to_integer(Ss)
         },
     Datetime = {Date, Time},
+
     case Tail of
         <<"Z">> ->
             {Datetime, 0};
-        <<".000Z">> ->
-            {Datetime, 0};
-        <<$., Millisec:3/binary, $Z>> ->
-            {Datetime, binary_to_integer(Millisec)};
-        <<$., Millisec:3/binary, UtcOffset:6/binary>> ->
-            UTC = local_datetime_to_utc(Datetime, UtcOffset),
-            {UTC, binary_to_integer(Millisec)};
+        <<$., RestTail/binary>> ->
+            [Milliseconds, UtcOffset] = binary:split(RestTail, [<<"Z">>, <<"+">>, <<"-">>], [global]),
+
+            Ms = case Milliseconds of
+                <<>> ->
+                    0;
+                _ ->
+                    multiply(binary_to_integer(Milliseconds), (3 - byte_size(Milliseconds)))
+            end,
+
+            case UtcOffset of
+                <<>> ->
+                    {Datetime, Ms};
+                _ ->
+                    NonOffsetSize = byte_size(RestTail) - 6,
+                    <<_:NonOffsetSize/binary, UtcOffsetArea/binary>> = RestTail,
+                    {local_datetime_to_utc(Datetime, UtcOffsetArea), Ms}
+            end;
         <<UtcOffset:6/binary>> ->
             {local_datetime_to_utc(Datetime, UtcOffset), 0}
+    end.
+
+multiply(Value, Factor) ->
+    case Factor =< 0 of
+        true ->
+            Value;
+        _ ->
+            multiply(Value*10, Factor -1)
     end.
 
 -spec iso8601_to_epoch_msecs(binary()) ->
