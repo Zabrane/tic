@@ -6,83 +6,74 @@
 %%% @copyright (C) 2013 Ubiquiti Networks, Inc.
 %%% @end
 %%%-------------------------------------------------------------------
+
 -module(tic_SUITE).
 
-%% CT callbacks
--export(
-    [ all/0
-    , groups/0
-    , suite/0
-    ]).
+-export([
 
-%% Tests
--export(
-    [ t_datetime_to_epoch_test/1
-    , t_datetime_to_iso8601_test/1
-    , t_datetime_plus_day/1
-    , t_epoch_to_datetime_test/1
-    , t_epoch_to_iso8601_test/1
-    , t_gregorian_seconds_to_iso8601_test/1
-    , t_iso8601_to_datetime_test/1
-    , t_iso8601_to_epoch_test/1
-    , t_iso8601_to_gregorian_seconds_test/1
-    , t_timestamp_to_epoch_test/1
-    ]).
+    %suite callbacks
 
+    all/0,
+    groups/0,
+    suite/0,
 
-%% Days between Jan 1, 0001 (beginning of the Gregorian calendar) and Jan 1,
-%% 1970 (Unix epoch) in seconds.  62167219200 =
-%% calendar:datetime_to_gregorian_seconds({{1970,1,1},{0,0,0}}).
+    %tests
+
+    t_datetime_to_epoch_test/1,
+    t_datetime_to_iso8601_test/1,
+    t_datetime_plus_day/1,
+    t_epoch_to_datetime_test/1,
+    t_epoch_to_iso8601_test/1,
+    t_gregorian_seconds_to_iso8601_test/1,
+    t_iso8601_to_datetime_test/1,
+    t_iso8601_to_epoch_test/1,
+    t_iso8601_to_gregorian_seconds_test/1,
+    t_timestamp_to_epoch_test/1
+]).
+
 -define(SECONDS_TO_UNIX_EPOCH, 62167219200).
-
 
 suite() ->
     [{ct_hooks, [cth_surefire]}, {timetrap, {seconds, 120}}].
 
 groups() ->
-    Group = tic,
-    Tests =
-        [ t_datetime_to_epoch_test
-        , t_datetime_to_iso8601_test
-        , t_datetime_plus_day
-        , t_epoch_to_datetime_test
-        , t_epoch_to_iso8601_test
-        , t_gregorian_seconds_to_iso8601_test
-        , t_iso8601_to_datetime_test
-        , t_iso8601_to_epoch_test
-        , t_iso8601_to_gregorian_seconds_test
-        , t_timestamp_to_epoch_test
-        ],
-    Options = [parallel],
-    [{Group, Options, Tests}].
+    Tests = [
+        t_datetime_to_epoch_test,
+        t_datetime_to_iso8601_test,
+        t_datetime_plus_day,
+        t_epoch_to_datetime_test,
+        t_epoch_to_iso8601_test,
+        t_gregorian_seconds_to_iso8601_test,
+        t_iso8601_to_datetime_test,
+        t_iso8601_to_epoch_test,
+        t_iso8601_to_gregorian_seconds_test,
+        t_timestamp_to_epoch_test
+    ],
+    [{tic, [parallel], Tests}].
 
 all() ->
     [{group, tic}].
 
-
 t_datetime_to_iso8601_test(_) ->
-    <<"2012-05-19T22:34:55Z">> =
-        tic:datetime_to_iso8601({{2012,5,19},{22,34,55}}),
-    <<"2012-11-30T09:01:00.486Z">> =
-        tic:datetime_to_iso8601({{{2012,11,30},{9,1,0}},486}).
+    <<"2012-05-19T22:34:55Z">>      = tic:datetime_to_iso8601({{2012,5,19},{22,34,55}}),
+    <<"2012-11-30T09:01:00Z">>      = tic:datetime_to_iso8601({{{2012,11,30},{9,1,0}},0}),
+    <<"2012-11-30T09:01:00.004Z">>  = tic:datetime_to_iso8601({{{2012,11,30},{9,1,0}},4}),
+    <<"2012-11-30T09:01:00.048Z">>  = tic:datetime_to_iso8601({{{2012,11,30},{9,1,0}},48}),
+    <<"2012-11-30T09:01:00.486Z">>  = tic:datetime_to_iso8601({{{2012,11,30},{9,1,0}},486}).
 
 t_iso8601_to_datetime_test(_) ->
-    {{2012,05,19},{22,34,55}} =
-        tic:iso8601_to_datetime(<<"2012-05-19T22:34:55Z">>),
-    {{{2012,11,30},{9,1,0}},486} =
-        tic:iso8601_to_datetime(<<"2012-11-30T09:01:00.486Z">>).
+    {{{2012,05,19},{22,34,55}}, 0}  = tic:iso8601_to_datetime(<<"2012-05-19T22:34:55Z">>),
+    {{{2012,11,30},{9,1,0}}, 400}   = tic:iso8601_to_datetime(<<"2012-11-30T09:01:00.4Z">>),
+    {{{2012,11,30},{9,1,0}}, 420}   = tic:iso8601_to_datetime(<<"2012-11-30T09:01:00.42Z">>),
+    {{{2012,11,30},{9,1,0}}, 486}   = tic:iso8601_to_datetime(<<"2012-11-30T09:01:00.486Z">>).
 
 t_gregorian_seconds_to_iso8601_test(_) ->
-    GregorianSec =
-        calendar:datetime_to_gregorian_seconds({{2012,10,5},{1,10,11}}),
-    <<"2012-10-05T01:10:11Z">> =
-        tic:gregorian_secs_to_iso8601(GregorianSec).
+    GregorianSec = calendar:datetime_to_gregorian_seconds({{2012,10,5},{1,10,11}}),
+    <<"2012-10-05T01:10:11Z">> = tic:gregorian_secs_to_iso8601(GregorianSec).
 
 t_iso8601_to_gregorian_seconds_test(_) ->
-    GregorianSec =
-        calendar:datetime_to_gregorian_seconds({{1950,2,22},{15,30,14}}),
-    GregorianSec =
-        tic:iso8601_to_gregorian_secs(<<"1950-02-22T15:30:14Z">>),
+    GregorianSec = calendar:datetime_to_gregorian_seconds({{1950,2,22},{15,30,14}}),
+    GregorianSec = tic:iso8601_to_gregorian_secs(<<"1950-02-22T15:30:14Z">>),
     Ms = GregorianSec * 1000 + 653,
     Ms = tic:iso8601_to_gregorian_msecs(<<"1950-02-22T15:30:14.653Z">>).
 
