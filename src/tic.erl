@@ -203,10 +203,14 @@ iso8601_to_datetime(<<YYYY:4/binary, $-, MM:2/binary, $-, DD:2/binary, $T, Hh:2/
     Datetime = {Date, Time},
 
     case Tail of
+        <<>> ->
+            % based on the wikipedia If no UTC relation information is given with a time representation,
+            % the time is assumed to be in local time
+            {Datetime, 0};
         <<"Z">> ->
             {Datetime, 0};
         <<$., RestTail/binary>> ->
-            [Milliseconds, UtcOffset] = binary:split(RestTail, [<<"Z">>, <<"+">>, <<"-">>], [global]),
+            [Milliseconds, UtcOffset] = split_tail_ms_offset(RestTail),
             Ms = get_ms(Milliseconds),
 
             case UtcOffset of
@@ -313,7 +317,15 @@ get_datetime_ms({_T1, T2} = T) when is_tuple(T2) ->
 get_datetime_ms(T) ->
     T.
 
-get_ms(Milliseconds) ->
+split_tail_ms_offset(Tail) ->
+    case binary:split(Tail, [<<"Z">>, <<"+">>, <<"-">>], [global]) of
+        [_Ms, _UtcOffset] = R ->
+            R;
+        [Ms] ->
+            [Ms, <<>>]
+    end.
+
+get_ms(Milliseconds) when byte_size(Milliseconds) < 4 ->
     case Milliseconds of
         <<>> ->
             0;
