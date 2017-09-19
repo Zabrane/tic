@@ -3,35 +3,16 @@
 %%% @author Mahesh Paolini-Subramanya <mahesh@dieswaytoofast.com>
 %%% @author Paul Oliver <puzza007@gmail.com>
 %%% @author Siraaj Khandkar <siraaj@khandkar.net>
+%%% @author Silviu Caragea <silviu.cpp@gmail.com>
 %%% @copyright (C) 2013 Ubiquiti Networks, Inc.
 %%% @end
 %%%-------------------------------------------------------------------
 
 -module(tic_SUITE).
 
--export([
+-include("tic.hrl").
 
-    %suite callbacks
-
-    all/0,
-    groups/0,
-    suite/0,
-
-    %tests
-
-    t_datetime_to_epoch_test/1,
-    t_datetime_to_iso8601_test/1,
-    t_datetime_plus_day/1,
-    t_epoch_to_datetime_test/1,
-    t_epoch_to_iso8601_test/1,
-    t_gregorian_seconds_to_iso8601_test/1,
-    t_iso8601_to_datetime_test/1,
-    t_iso8601_to_epoch_test/1,
-    t_iso8601_to_gregorian_seconds_test/1,
-    t_timestamp_to_epoch_test/1
-]).
-
--define(SECONDS_TO_UNIX_EPOCH, 62167219200).
+-compile(export_all).
 
 suite() ->
     [{ct_hooks, [cth_surefire]}, {timetrap, {seconds, 120}}].
@@ -44,6 +25,7 @@ groups() ->
         t_epoch_to_datetime_test,
         t_epoch_to_iso8601_test,
         t_gregorian_seconds_to_iso8601_test,
+        t_iso8601_parse,
         t_iso8601_to_datetime_test,
         t_iso8601_to_epoch_test,
         t_iso8601_to_gregorian_seconds_test,
@@ -77,6 +59,19 @@ t_gregorian_seconds_to_iso8601_test(_) ->
     GregorianSec = calendar:datetime_to_gregorian_seconds({{2012,10,5},{1,10,11}}),
     <<"2012-10-05T01:10:11Z">> = tic:gregorian_secs_to_iso8601(GregorianSec).
 
+t_iso8601_parse(_) ->
+    #iso8601{year = 2017, month = 7, day = 3, hour = 12, min = 20, sec = 45, ms = 0, tz_offset = 0} =
+        tic:iso8601_parse(<<"2017-07-03T12:20:45Z">>),
+
+    #iso8601{year = 2017, month = 7, day = 3, hour = 12, min = 20, sec = 45, ms = 100, tz_offset = 0} =
+        tic:iso8601_parse(<<"2017-07-03T12:20:45.100Z">>),
+
+    #iso8601{year = 2017, month = 7, day = 3, hour = 12, min = 20, sec = 45, ms = 100, tz_offset = undefined} =
+        tic:iso8601_parse(<<"2017-07-03T12:20:45.100">>),
+
+    #iso8601{year = 2017, month = 7, day = 3, hour = 12, min = 20, sec = 45, ms = 0, tz_offset = undefined} =
+        tic:iso8601_parse(<<"2017-07-03T12:20:45">>).
+
 t_iso8601_to_gregorian_seconds_test(_) ->
     GregorianSec = calendar:datetime_to_gregorian_seconds({{1950,2,22},{15,30,14}}),
     GregorianSec = tic:iso8601_to_gregorian_secs(<<"1950-02-22T15:30:14Z">>),
@@ -85,18 +80,18 @@ t_iso8601_to_gregorian_seconds_test(_) ->
 
 t_datetime_to_epoch_test(_) ->
     Datetime = {{2000,1,1},{10,20,30}},
-    GregEpochDiff = ?SECONDS_TO_UNIX_EPOCH,
+    GregEpochDiff = ?TIC_GREGORIAN_SECONDS_TO_UNIX_EPOCH,
     Epoch = calendar:datetime_to_gregorian_seconds(Datetime) - GregEpochDiff,
     Epoch = tic:datetime_to_epoch_secs(Datetime).
 
 t_epoch_to_datetime_test(_) ->
     Datetime = {{2000,1,1},{10,20,30}},
-    GregEpochDiff = ?SECONDS_TO_UNIX_EPOCH,
+    GregEpochDiff = ?TIC_GREGORIAN_SECONDS_TO_UNIX_EPOCH,
     Epoch = calendar:datetime_to_gregorian_seconds(Datetime) - GregEpochDiff,
     Datetime = tic:epoch_secs_to_datetime(Epoch).
 
 t_epoch_to_iso8601_test(_) ->
-    GregEpochDiff = ?SECONDS_TO_UNIX_EPOCH,
+    GregEpochDiff = ?TIC_GREGORIAN_SECONDS_TO_UNIX_EPOCH,
     Datetime = {{2011, 12, 31},{5,25,53}},
     Epoch = calendar:datetime_to_gregorian_seconds(Datetime) - GregEpochDiff,
     <<"2011-12-31T05:25:53Z">> = tic:epoch_secs_to_iso8601(Epoch),
@@ -105,7 +100,7 @@ t_epoch_to_iso8601_test(_) ->
     <<"2011-12-31T05:25:53.672Z">> = ISO8601.
 
 t_iso8601_to_epoch_test(_) ->
-    GregEpochDiff = ?SECONDS_TO_UNIX_EPOCH,
+    GregEpochDiff = ?TIC_GREGORIAN_SECONDS_TO_UNIX_EPOCH,
     Datetime = {{1989, 7, 20},{20,30,21}},
     GregSecs = calendar:datetime_to_gregorian_seconds(Datetime),
     Epoch = GregSecs - GregEpochDiff,
@@ -114,7 +109,7 @@ t_iso8601_to_epoch_test(_) ->
     Ms = tic:iso8601_to_epoch_msecs(<<"1989-07-20T20:30:21.217Z">>).
 
 t_timestamp_to_epoch_test(_) ->
-    GregEpochDiff = ?SECONDS_TO_UNIX_EPOCH,
+    GregEpochDiff = ?TIC_GREGORIAN_SECONDS_TO_UNIX_EPOCH,
     Timestamp = os:timestamp(),
     Secs  = tic:timestamp_to_epoch_secs(Timestamp),
     Msecs = tic:timestamp_to_epoch_msecs(Timestamp),
