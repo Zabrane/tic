@@ -176,14 +176,28 @@ gregorian_secs_to_iso8601(Seconds) ->
     iso8601().
 
 iso8601_parse(<<YYYY:4/binary, $-, MM:2/binary, $-, DD:2/binary, $T, Hh:2/binary, $:, Mm:2/binary, $:, Ss:2/binary, Tail/binary>>) ->
-    Year  = binary_to_integer(YYYY),
-    Month = binary_to_integer(MM),
-    Day = binary_to_integer(DD),
-    Hour =  binary_to_integer(Hh),
-    Minute = binary_to_integer(Mm),
-    Second = binary_to_integer(Ss),
     {Ms, Offset} = iso8601_tail_ms_and_offset(Tail),
-    #iso8601 {year = Year, month = Month, day = Day, hour = Hour, min = Minute, sec = Second, ms = Ms, tz_offset = Offset}.
+    #iso8601 {
+        year = binary_to_integer(YYYY),
+        month = binary_to_integer(MM),
+        day = binary_to_integer(DD),
+        hour = binary_to_integer(Hh),
+        min = binary_to_integer(Mm),
+        sec = binary_to_integer(Ss),
+        ms = Ms, 
+        tz_offset = Offset
+    };
+iso8601_parse(<<YYYY:4/binary, $-, MM:2/binary, $-, DD:2/binary>>) ->
+    #iso8601 {
+        year = binary_to_integer(YYYY),
+        month = binary_to_integer(MM),
+        day = binary_to_integer(DD),
+        hour = 0,
+        min = 0,
+        sec = 0,
+        ms = 0,
+        tz_offset = undefined
+    }.
 
 -spec iso8601_to_datetime(binary()) ->
     datetime_ms().

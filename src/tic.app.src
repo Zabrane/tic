@@ -1,6 +1,6 @@
 {application, tic, [
     {description, "Date and time conversion."},
-    {vsn, "1.2.0"},
+    {vsn, "1.2.1"},
     {registered, []},
     {applications, [kernel, stdlib, bstr]},
     {env, []}

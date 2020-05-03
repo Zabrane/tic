@@ -60,6 +60,9 @@ t_gregorian_seconds_to_iso8601_test(_) ->
     <<"2012-10-05T01:10:11Z">> = tic:gregorian_secs_to_iso8601(GregorianSec).
 
 t_iso8601_parse(_) ->
+    #iso8601{year = 2017, month = 7, day = 3, hour = 0, min = 0, sec = 0, ms = 0, tz_offset = undefined} =
+        tic:iso8601_parse(<<"2017-07-03">>),
+
     #iso8601{year = 2017, month = 7, day = 3, hour = 12, min = 20, sec = 45, ms = 0, tz_offset = 0} =
         tic:iso8601_parse(<<"2017-07-03T12:20:45Z">>),
 
